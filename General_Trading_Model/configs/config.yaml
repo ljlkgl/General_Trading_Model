@@ -1,0 +1,72 @@
+# 数据配置
+data:
+  csv_path: "data/ETHUSDT_15m_kline.csv"  # 15分钟数据（ETH）
+  split_ratios: [0.6, 0.2, 0.2]      # train/val/test 按时间顺序
+  window_L: 30                        # 输入历史窗口长度（30根15分钟K线=7.5小时）
+  horizon: 10                         # 预测未来10期=2.5小时收益（提高信噪比）
+  label_clip_quantile: 0.05           # 标签归一化分位数裁剪
+
+# 特征工程
+features:
+  log_return_windows: [1, 3, 5, 10]   # 对数收益率窗口
+  momentum_windows: [3, 5, 10]        # 动量窗口
+  volatility_windows: [5, 10, 20]     # 波动率窗口
+  ma_short: 5                         # 短期均线
+  ma_long: 20                         # 长期均线
+
+# 模型配置 (TSMixer)
+model:
+  num_blocks: 4                       # K 个交替的 Time/Feat MLP 块
+  dropout: 0.2                        # Dropout 概率（也用于 MC Dropout）
+  dropout_anneal: true                # 是否对 dropout 退火
+  dropout_min: 0.05                   # 退火下限
+  feat_hidden_mult: 2                 # FeatMLP 隐层维度倍数
+  revin: true                         # 是否启用 RevIN
+  revin_affine: true                  # RevIN 是否带可学习 affine
+
+# 训练配置
+train:
+  epochs: 30
+  batch_size: 512                      # 15m数据量大，增大batch加速训练
+  lr: 0.001
+  weight_decay: 0.0001               # L2
+  warmup_steps: 100
+  patience: 10                        # 早停耐心
+  grad_clip: 1.0                      # 梯度裁剪
+  seed: 42
+
+# 贝叶斯/MC Dropout
+bayes:
+  mc_samples: 20                      # 推理时 MC 采样次数 T
+
+# 策略与回测
+strategy:
+  conf_threshold: 0.07               # 置信度门限
+  position_lambda: 2.0               # 不确定度反向缩放系数
+  fee_rate: 0.0006                   # 手续费率（单边，>0）
+  slippage: 0.0005                   # 滑点（>0）
+  periods_per_year: 35040           # 年化周期数（15分钟线: 365*24*4）
+  max_leverage: 4.0                  # 最大杠杆倍数
+  use_risk_control: true             # 是否启用风控（波动率目标 + 回撤止损）
+  vol_target: 5.0                    # 目标年化波动率（15m数据年化波动率高，需匹配）
+  vol_window: 20                     # 波动率估计滚动窗口（期）
+  max_drawdown_threshold: 0.08       # 回撤阈值（收紧控回撤）
+  dd_scale: 0.7                      # 回撤减仓强度
+
+# 评估目标
+targets:
+  min_accuracy: 0.54                    # 最低方向正确率
+  min_sharpe: 1.1                       # 最低夏普比率
+  min_active_segments: 7                # 10段中至少7段有交易（防止交易集中一时）
+
+# 损失函数
+loss:
+  alpha: 1.0          # 方向分类损失权重
+  beta: 0.5           # IC 损失权重
+  dir_threshold: 0.02  # 方向判定阈值（|y|<此值=平类）
+  mse_weight: 0.1     # MSE权重（降低以避免压制方向信号）
+
+# 输出
+output:
+  results_dir: "results/results_15m"
+  save_model: true

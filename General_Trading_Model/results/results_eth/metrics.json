@@ -1,0 +1,9 @@
+{
+  "directional_accuracy": 0.5654450261780105,
+  "annual_return": 2.0107813027894212,
+  "annual_volatility": 1.0399115419216487,
+  "sharpe": 1.9336080250380776,
+  "max_drawdown": 0.3062348251127678,
+  "trade_active_segments": 10,
+  "nonzero_position_pct": 0.95
+}

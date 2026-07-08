@@ -428,7 +428,7 @@ annualized_vol = rolling_vol * sqrt(periods_per_year)
 vol_scale = min(vol_target / annualized_vol, 1.0)  # 仅下缩放，不上缩放
 ```
 
-**2. 回撤止损（负反馈，已修复死锁 bug）**
+**2. 回撤止损**
 
 ```python
 # 关键：equity 用"实际减仓后仓位"计算，形成负反馈：
@@ -445,7 +445,7 @@ for i in range(n):
         dd_scale = max(1 - dd_scale · (1 + excess_dd), min_dd_scale)  # 最低保留 15%
 ```
 
-**修复的死锁 bug**：早期版本 equity 用"未减仓仓位"计算（正反馈），running_max 永不下降，dd_scale 可归零导致永久空仓。修复后 equity 用实际减仓仓位，`min_dd_scale=0.15` 保证最低仓位，回撤恢复时重置 running_max。
+
 
 ### 回测（`backtest`）
 
@@ -504,9 +504,6 @@ equity_curve = cumsum(net_returns)
 | 交易分散段数 | 10/10 | ✓ (≥7) |
 | 非零持仓占比 | 95.00% | — |
 
-### 关于 ETH 15m
-
-`configs/config.yaml` 为 ETH 15m 配置。实测发现：15m 数据噪声极大，修复风控死锁 bug 后真实夏普为负（之前 4.63 是虚假的）。**15m 周期不推荐使用**，保留配置仅供对比参考。
 
 ---
 
